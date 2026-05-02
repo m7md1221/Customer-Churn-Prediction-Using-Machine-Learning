@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(py --version)",
-      "Bash(Get-ChildItem \"C:\\\\Users\\\\dell\\\\Downloads\" -Filter \"*Telco*\" -Recurse -ErrorAction SilentlyContinue)",
-      "Bash(Select-Object FullName)"
-    ]
-  }
-}
