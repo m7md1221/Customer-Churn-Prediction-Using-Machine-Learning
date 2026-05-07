@@ -10,8 +10,12 @@ A machine learning pipeline that predicts customer churn on the **Telco Customer
 Customer Churn Prediction Using Machine Learning/
 ├── churn_ml_modeling.py                  # Main ML pipeline script
 ├── WA_Fn-UseC_-Telco-Customer-Churn.csv  # Raw dataset (Kaggle)
+├── 0_churn_distribution.png             # Churn class distribution
+├── 0_tenure_distribution.png            # Tenure histogram
+├── 0_monthly_charges_boxplot.png        # Monthly charges boxplot
 ├── 1_correlation_matrix.png              # Feature correlation heatmap
 ├── 2_feature_scores.png                  # SelectKBest F-score bar chart
+├── 2b_kmeans_clusters.png               # K-Means customer clusters
 ├── 3a_dt_feature_importance.png          # Decision Tree feature importances
 ├── 3b_decision_tree_structure.png        # Decision Tree visual (first 3 levels)
 ├── 4_cm_decision_tree.png                # Decision Tree confusion matrix
@@ -35,6 +39,12 @@ Customer Churn Prediction Using Machine Learning/
 ## Pipeline Overview
 
 ### 1. Data Loading & Preprocessing
+
+- Perform data understanding by inspecting dataset shape, column types, missing values, and class distribution
+- Generate visualizations for:
+  - Churn distribution
+  - Tenure distribution
+  - Monthly charges boxplot
 - Load raw CSV with `pandas`
 - Convert `TotalCharges` to numeric (blank entries coerced to NaN and dropped)
 - Drop non-informative `customerID` column
@@ -67,7 +77,18 @@ Customer Churn Prediction Using Machine Learning/
 - Stratified by target to preserve class ratio
 - Training samples: 4,922 · Testing samples: 2,110
 
-### 4. Models
+
+### 4. Feature Scaling
+- Apply `MinMaxScaler` before training the SVM model
+- Scaling improves SVM performance because the RBF kernel is distance-based
+
+### 5. K-Means Clustering
+- Apply K-Means clustering with `3 clusters`
+- Discover hidden customer groups based on customer behavior
+- Visualize clusters using tenure and monthly charges
+
+
+### 6. Models
 
 **Decision Tree**
 - `max_depth = 5`
@@ -85,10 +106,9 @@ Customer Churn Prediction Using Machine Learning/
 
 | Model | Accuracy | Precision | Recall | F1-Score |
 |---|---|---|---|---|
-| **Decision Tree** | **78.67%** | **0.6242** | **0.4973** | **0.5536** |
-| SVM (RBF) | 77.11% | 0.6089 | 0.3886 | 0.4744 |
-
-> Decision Tree outperformed SVM on all metrics for this dataset and feature set.
+| **Decision Tree** | **78.67%** | 0.6242 | **0.4973** | **0.5536** |
+| SVM (RBF) | 78.58% | **0.6438** | 0.4349 | 0.5191 |
+> Decision Tree slightly outperformed SVM overall by achieving higher Recall and F1-Score, while SVM achieved slightly higher Precision.
 
 ---
 
@@ -132,6 +152,10 @@ $env:PYTHONUTF8=1; py churn_ml_modeling.py
 
 | File | Description |
 |---|---|
+| `0_churn_distribution.png` | Churn class distribution |
+| `0_tenure_distribution.png` | Tenure histogram |
+| `0_monthly_charges_boxplot.png` | Monthly charges boxplot |
+| `2b_kmeans_clusters.png` | K-Means customer clusters |
 | `1_correlation_matrix.png` | Heatmap of feature correlations |
 | `2_feature_scores.png` | ANOVA F-score bar chart for all features |
 | `3a_dt_feature_importance.png` | Gini importance per feature (Decision Tree) |

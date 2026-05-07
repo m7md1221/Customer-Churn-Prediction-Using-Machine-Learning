@@ -30,8 +30,10 @@ import seaborn as sns
 
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.svm import SVC
+from sklearn.cluster import KMeans
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score,
     f1_score, confusion_matrix, classification_report,
@@ -54,7 +56,49 @@ _CSV = "WA_Fn-UseC_-Telco-Customer-Churn.csv"
 
 try:
     _raw = pd.read_csv(_CSV)
+    # ==============================
+    # DATA UNDERSTANDING & VISUALIZATION
+    # ==============================
+    print("\nDATA UNDERSTANDING")
+    print("Original dataset shape:", _raw.shape)
+    print("\nColumn names:")
+    print(_raw.columns.tolist())
+    print("\nData types:")
+    print(_raw.dtypes)
+    print("\nMissing values before cleaning:")
+    print(_raw.isnull().sum())
+    print("\nChurn distribution before encoding:")
+    print(_raw["Churn"].value_counts())
 
+    plt.figure(figsize=(6, 4))
+    sns.countplot(x="Churn", data=_raw)
+    plt.title("Churn Class Distribution")
+    plt.xlabel("Churn")
+    plt.ylabel("Number of Customers")
+    plt.tight_layout()
+    plt.savefig("0_churn_distribution.png", dpi=150)
+    plt.close()
+
+    plt.figure(figsize=(6, 4))
+    sns.histplot(_raw["tenure"], bins=30, kde=True)
+    plt.title("Tenure Distribution")
+    plt.xlabel("Tenure (Months)")
+    plt.ylabel("Number of Customers")
+    plt.tight_layout()
+    plt.savefig("0_tenure_distribution.png", dpi=150)
+    plt.close()
+
+    plt.figure(figsize=(6, 4))
+    sns.boxplot(x=_raw["MonthlyCharges"])
+    plt.title("Monthly Charges Boxplot")
+    plt.xlabel("Monthly Charges")
+    plt.tight_layout()
+    plt.savefig("0_monthly_charges_boxplot.png", dpi=150)
+    plt.close()
+
+    print("  ✔ Saved → 0_churn_distribution.png")
+    print("  ✔ Saved → 0_tenure_distribution.png")
+    print("  ✔ Saved → 0_monthly_charges_boxplot.png")
     # TotalCharges has blank strings for some new customers — coerce to NaN then drop
     _raw["TotalCharges"] = pd.to_numeric(_raw["TotalCharges"], errors="coerce")
     _raw.dropna(inplace=True)
@@ -180,6 +224,7 @@ print("  SECTION 2 │ TRAIN-TEST SPLIT  (70 % / 30 %)")
 print("=" * 68)
 
 X_train, X_test, y_train, y_test = train_test_split(
+
     X, y,
     test_size=0.30,
     random_state=RANDOM_STATE,
@@ -190,6 +235,66 @@ print(f"\n  Training samples  : {X_train.shape[0]}")
 print(f"  Testing  samples  : {X_test.shape[0]}")
 print(f"  Train churn rate  : {y_train.mean():.2%}")
 print(f"  Test  churn rate  : {y_test.mean():.2%}")
+
+# =============================================================================
+#  FEATURE SCALING
+# =============================================================================
+print("\n" + "=" * 68)
+print("  FEATURE SCALING │ MinMaxScaler")
+print("=" * 68)
+
+scaler = MinMaxScaler()
+
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled  = scaler.transform(X_test)
+
+print("\n  ✔ Features scaled successfully using MinMaxScaler.")
+
+
+# =============================================================================
+#  SECTION 2.5 — K-MEANS CLUSTERING
+# =============================================================================
+print("\n" + "=" * 68)
+print("  SECTION 2.5 │ K-MEANS CLUSTERING")
+print("=" * 68)
+
+kmeans = KMeans(
+    n_clusters=3,
+    random_state=RANDOM_STATE,
+    n_init=10
+)
+
+clusters = kmeans.fit_predict(X)
+
+print("\n  ✔ K-Means clustering completed.")
+print(f"  Number of clusters: {kmeans.n_clusters}")
+
+cluster_counts = pd.Series(clusters).value_counts().sort_index()
+
+print("\n  Cluster distribution:")
+for i, count in cluster_counts.items():
+    print(f"    Cluster {i}: {count} customers")
+
+# Visualization
+plt.figure(figsize=(7, 5))
+
+sns.scatterplot(
+    x=df["tenure"],
+    y=df["MonthlyCharges"],
+    hue=clusters,
+    palette="Set2"
+)
+
+plt.title("K-Means Customer Clusters")
+plt.xlabel("Tenure")
+plt.ylabel("Monthly Charges")
+
+plt.tight_layout()
+plt.savefig("2b_kmeans_clusters.png", dpi=150)
+plt.close()
+
+print("  ✔ Saved → 2b_kmeans_clusters.png")
+
 
 
 # =============================================================================
@@ -264,8 +369,8 @@ svm_model = SVC(
     gamma="scale",    # kernel coefficient auto-scaled to 1/(n_features * X.var())
     random_state=RANDOM_STATE,
 )
-svm_model.fit(X_train, y_train)
-y_pred_svm = svm_model.predict(X_test)
+svm_model.fit(X_train_scaled, y_train)
+y_pred_svm = svm_model.predict(X_test_scaled)
 
 print("\n  SVM parameters:")
 print(f"    kernel = {svm_model.kernel}")
